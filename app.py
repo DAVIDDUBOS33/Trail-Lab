@@ -5,8 +5,8 @@ import plotly.graph_objects as go
 from urllib.parse import urlencode
 
 # --- CONFIGURATION API (À REMPLIR) ---
-CLIENT_ID = "VOTRE_CLIENT_ID"
-CLIENT_SECRET = "VOTRE_CLIENT_SECRET"
+CLIENT_ID = st.secrets["STRAVA_CLIENT_ID"]
+CLIENT_SECRET = st.secrets["STRAVA_CLIENT_SECRET"]
 # L'URL de votre application déployée (ex: https://mon-trail-app.streamlit.app/)
 REDIRECT_URI = "https://trail-lab.streamlit.app/" 
 
