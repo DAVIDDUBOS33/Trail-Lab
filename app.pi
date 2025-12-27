@@ -1,0 +1,76 @@
+import streamlit as st
+import requests
+import pandas as pd
+from urllib.parse import urlencode
+
+# --- CONFIGURATION ---
+CLIENT_ID = "TON_CLIENT_ID"
+CLIENT_SECRET = "TON_CLIENT_SECRET"
+REDIRECT_URI = "https://ton-app.streamlit.app/" # Ton URL de déploiement
+
+st.set_page_config(page_title="Trail Predictor Pro", layout="centered")
+
+# --- FONCTION OAUTH STRAVA ---
+def get_logged_in_user_data(code):
+    auth_url = "https://www.strava.com/oauth/token"
+    payload = {
+        'client_id': CLIENT_ID,
+        'client_secret': CLIENT_SECRET,
+        'code': code,
+        'grant_type': 'authorization_code'
+    }
+    res = requests.post(auth_url, data=payload)
+    return res.json()
+
+def get_activities(access_token):
+    url = "https://www.strava.com/api/v3/athlete/activities"
+    header = {'Authorization': f'Bearer {access_token}'}
+    param = {'per_page': 20, 'page': 1}
+    return requests.get(url, headers=header, params=param).json()
+
+# --- INTERFACE ---
+st.title("🏃‍♂️ Trail Predictor (Expert)")
+
+# Gestion de l'authentification (URL contient ?code=...)
+query_params = st.query_params
+if "code" not in query_params:
+    # Bouton de connexion
+    params = {
+        "client_id": CLIENT_ID,
+        "redirect_uri": REDIRECT_URI,
+        "response_type": "code",
+        "scope": "activity:read_all"
+    }
+    url = f"https://www.strava.com/oauth/authorize?{urlencode(params)}"
+    st.link_button("🔗 Se connecter à Strava pour importer mes données", url)
+else:
+    # Récupération des données
+    with st.spinner('Analyse de vos sorties Strava...'):
+        token_data = get_logged_in_user_data(query_params["code"])
+        activities = get_activities(token_data['access_token'])
+        
+        # Filtrer uniquement le trail (type: 'TrailRun')
+        trails = [a for a in activities if a['type'] == 'TrailRun']
+        
+        if trails:
+            # Calcul de l'allure moyenne réelle sur les derniers trails
+            total_dist = sum([a['distance'] for a in trails]) / 1000 # km
+            total_time = sum([a['moving_time'] for a in trails]) / 60 # min
+            # On utilise le GAP simplifié (Grade Adjusted Pace)
+            avg_pace = total_time / total_dist
+            
+            st.success(f"Analysé : {len(trails)} trails récents. Votre allure moyenne identifiée : {avg_pace:.2f} min/km")
+            
+            # Formulaire de prédiction
+            dist_course = st.number_input("Distance du Trail cible (km)", value=20.0)
+            dplus_course = st.number_input("Dénivelé Positif (m)", value=1000)
+            
+            # Calcul Naismith Expert
+            km_effort = dist_course + (dplus_course / 100)
+            temps_final = km_effort * avg_pace
+            
+            h = int(temps_final // 60)
+            m = int(temps_final % 60)
+            st.metric("Temps estimé pour votre prochaine course", f"{h}h {m}min")
+        else:
+            st.warning("Aucune activité de type 'Trail Run' trouvée dans vos 20 dernières sorties.")
