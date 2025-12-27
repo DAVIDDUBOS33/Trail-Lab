@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import plotly
 import plotly.graph_objects as go
 from urllib.parse import urlencode
 
