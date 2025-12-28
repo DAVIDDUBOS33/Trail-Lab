@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 CLIENT_ID = st.secrets["STRAVA_CLIENT_ID"]
 CLIENT_SECRET = st.secrets["STRAVA_CLIENT_SECRET"]
 # L'URL de votre application déployée (ex: https://mon-trail-app.streamlit.app/)
-REDIRECT_URI = "https://trail-lab.streamlit.app/" 
+REDIRECT_URI ="dwb-solutions.com" # "https://trail-lab.streamlit.app/" 
 
 st.set_page_config(page_title="Expert Trail Predictor", layout="wide")
 
